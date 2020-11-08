@@ -10,6 +10,8 @@ const BoardSchema = new Schema({
 		type: Schema.Types.ObjectId,
 		ref: "users",
 	},
+	photo: String,
+	title: String,
 	columns: [
 		{
 			title: String,
