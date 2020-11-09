@@ -2,14 +2,18 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const BoardSchema = new Schema({
-	users: {
-		type: Schema.Types.ObjectId,
-		ref: "users",
-	},
-	admins: {
-		type: Schema.Types.ObjectId,
-		ref: "users",
-	},
+	users: [
+		{
+			type: Schema.Types.ObjectId,
+			ref: "users",
+		},
+	],
+	admins: [
+		{
+			type: Schema.Types.ObjectId,
+			ref: "users",
+		},
+	],
 	photo: String,
 	title: String,
 	columns: [

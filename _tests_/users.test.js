@@ -40,7 +40,7 @@ it("Does not register a user with an invalid email adress", async (done) => {
 	}
 });
 
-// Delete the created user after the test, disconnects from db
+// Delete the created user after the test, disconnect from db
 afterAll(async (done) => {
 	await User.deleteOne({ email: "emma@gmail.com" });
 	await mongoose.connection.close();

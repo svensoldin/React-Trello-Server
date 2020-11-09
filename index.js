@@ -26,5 +26,6 @@ app.get("/test", (req, res) => {
 	res.status(200).json({ message: "Pass!" });
 });
 app.use("/users", require("./routes/users"));
+app.use("/boards", require("./routes/boards"));
 
 module.exports = app;
