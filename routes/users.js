@@ -6,6 +6,19 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
 
+// GET
+// Get all users: /users
+
+router.get("/", async (req, res) => {
+	try {
+		const users = await User.find({});
+		return res.status(200).json(users);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
+
 // POST
 // Register a new user: /users/register
 

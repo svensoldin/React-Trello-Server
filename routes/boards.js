@@ -66,17 +66,72 @@ router.delete("/:id", [auth], async (req, res) => {
 });
 
 // PATCH
-// Add a card to a board /boards/:id/card
+// Add a user to a board /boards/:id/user
+
+router.patch("/:id/user", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.id);
+		if (!board) return res.status(403).json("Board not found");
+		board.users.push(req.body.user);
+		await board.save();
+		return res.status(200).json("User added");
+	} catch (err) {
+		console.error(err);
+		res.status(500).json("Server error");
+	}
+});
+
+// PATCH
+// Remove a user from the board /boards/:id/user/remove
+
+router.patch("/:id/user/remove", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.id);
+		if (!board) return res.status(404).json("No board found");
+		// Check if the client is an admin
+		if (!board.admins.filter((admin) => req.user == admin).length) {
+			return res.status(401).json("Only an admin can remove a user");
+		}
+		board.users = board.users.filter((user) => req.body.user != user);
+		await board.save();
+		return res.status(200).json("User removed");
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
+
+// PATCH
+// Change the name of the board /boards/:id/title
+
+router.patch("/:id/title", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.id);
+		if (!board) return res.status(403).json("Board not found");
+		board.title = req.body.title;
+		await board.save();
+		return res.status(200).json(board.title);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json("Server error");
+	}
+});
+
+// Cards
+
+// PATCH
+// Create a card /boards/:id/card
 
 router.patch("/:id/card", [auth], async (req, res) => {
 	try {
 		const board = await Board.findById(req.params.id);
 		if (!board) return res.status(403).json("Board not found");
-		if (!board.admins.filter((admin) => req.user == admin).length) {
-			return res
-				.status(401)
-				.json("Not authorized, only an admin can add a card");
-		}
+		// if (!board.admins.filter((admin) => req.user == admin).length) {
+		// 	return res
+		// 		.status(401)
+		// 		.json("Not authorized, only an admin can add a card");
+		// }
+
 		// Pull the right column from the board
 		let column = board.columns.filter(
 			(column) => req.body.column == column.title
@@ -96,5 +151,8 @@ router.patch("/:id/card", [auth], async (req, res) => {
 		res.status(500).json("Server error");
 	}
 });
+
+// PATCH
+// Add a comment
 
 module.exports = router;
