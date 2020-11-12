@@ -2,6 +2,14 @@ const express = require("express");
 const router = express.Router();
 const Board = require("../models/Board");
 const auth = require("../middleware/auth");
+const multer = require("multer");
+
+// Multer config
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => cb(null, "uploads/"),
+	filename: (req, file, cb) => cb(null, Date.now() + "-" + file.name),
+});
+let upload = multer({ storage: storage }).single("file");
 
 // GET
 // Get all boards /boards
@@ -35,7 +43,7 @@ router.post("/", [auth], async (req, res) => {
 			};
 		});
 		await board.save();
-		return res.status(200).json(board);
+		return res.status(200).json("Board created");
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json("Server error");
@@ -190,6 +198,28 @@ router.patch("/:id/card/drag", [auth], async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json("Server error");
+	}
+});
+
+// POST
+// Upload attachment to card /boards/:id/card/upload
+
+router.post("/:id/card/upload", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.id);
+		const column = board.columns.find(
+			(column) => column.title == req.body.column
+		);
+		const card = column.cards.find((card) => card.title == req.body.card);
+		upload(req, res, (err) => {
+			if (err) return res.status(500).json(err);
+		});
+		card.attachments.push({ name: Date.now() + "-" + req.file.name });
+		await board.save();
+		return res.status(200).json(board);
+	} catch (err) {
+		console.error(err);
+		return res.status(500);
 	}
 });
 
