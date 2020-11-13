@@ -24,7 +24,7 @@ const BoardSchema = new Schema({
 					title: String,
 					comments: [
 						{
-							body: String,
+							body: { type: String, required: true },
 							user: {
 								type: Schema.Types.ObjectId,
 								ref: "users",

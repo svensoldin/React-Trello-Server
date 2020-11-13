@@ -223,4 +223,60 @@ router.post("/:id/card/upload", [auth], async (req, res) => {
 	}
 });
 
+// PATCH
+// Add a new comment to a card /boards/:id/card/comment
+
+router.patch("/:id/card/comment", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.id);
+		if (!board) return res.status(400).json("Board not found");
+		const column = board.columns.find(
+			(column) => column.title == req.body.column
+		);
+		if (!column) return res.status(400).json("Column not found");
+		const card = column.cards.find((card) => card.title == req.body.card);
+		if (!card) return res.status(400).json("Card not found");
+		if (!req.body.comment)
+			return res.status(400).json("Comment cannot be empty");
+		const newComment = {
+			body: req.body.comment,
+			user: req.user,
+		};
+		card.comments.push(newComment);
+		await board.save();
+		return res.status(200).json(card.comments);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
+
+// PATCH
+// Edit a comment /boards/:id/card/comment/edit
+
+router.patch("/:id/card/comment/edit", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.id);
+		if (!board) return res.status(400).json("Board not found");
+		const column = board.columns.find(
+			(column) => column.title == req.body.column
+		);
+		if (!column) return res.status(400).json("Column not found");
+		const card = column.cards.find((card) => card.title == req.body.card);
+		if (!card) return res.status(400).json("Card not found");
+		const comment = card.comments.find(
+			(comment) => comment._id == req.body.id
+		);
+		if (!comment) return res.status(400).json("Comment not found");
+		if (comment.user != req.user)
+			return res.status(403).json("You can't edit other users' comments");
+		comment.body = req.body.newComment;
+		await board.save();
+		return res.status(200).json(card.comments);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
+
 module.exports = router;
