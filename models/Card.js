@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const CardSchema = new Schema({
+	board: { type: Schema.Types.ObjectId, ref: "boards", required: true },
+	columnTitle: { type: String, required: true },
 	title: { type: String, required: true },
 	comments: [
 		{

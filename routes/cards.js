@@ -13,11 +13,13 @@ const storage = multer.diskStorage({
 let upload = multer({ storage: storage }).single("file");
 
 // GET
-// Get all cards /cards/
+// Get all cards from a board /cards/:boardId
 
-router.get("/", [auth], async (req, res) => {
+router.get("/:boardId", [auth], async (req, res) => {
 	try {
-		const cards = await Card.find({});
+		const board = await Board.findById(req.params.boardId);
+		if (!board) return res.status(400).json("Board not found");
+		const cards = await Card.find({ board: board._id });
 		return res.status(200).json(cards);
 	} catch (err) {
 		console.error(err);
@@ -25,15 +27,50 @@ router.get("/", [auth], async (req, res) => {
 	}
 });
 
-// PATCH
-// Add a new comment to a card /cards/:id/comment/add
+// DELETE
+// Delete a card /cards/:cardId
 
-router.patch("/:id/comment/add", [auth], async (req, res) => {
+router.delete("/:cardId", [auth], async (req, res) => {
 	try {
-		const card = await Card.findById(req.params.id);
+		const card = await Card.findById(req.params.cardId);
+		if (!card) return res.status(400).json("Card not found");
+		const board = await Board.findById(card.board);
+		if (!board) return res.status(400).json("Board not found");
+		// Check if client is on the board's users list
+		if (!board.users.find((user) => user == req.user))
+			return res
+				.status(403)
+				.json(
+					"You cannot delete a card from a board you are not a part of"
+				);
+		const column = board.columns.find(
+			(column) => column.title == card.columnTitle
+		);
+		if (!column) return res.status(400).json("Column not found");
+
+		// Get the index of the card to be deleted and remove it from the board
+		const removeIndex = column.cards.indexOf(card._id);
+		column.cards.splice(removeIndex, 1);
+
+		await card.deleteOne();
+		await board.save();
+		return res.status(200).json(column.cards);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err.message);
+	}
+});
+
+// PATCH
+// Add a new comment to a card /cards/:cardId/comment/add
+
+router.patch("/:cardId/comment/add", [auth], async (req, res) => {
+	try {
+		const card = await Card.findById(req.params.cardId);
 		if (!card) return res.status(400).json("Card not found");
 		if (!req.body.comment)
 			return res.status(400).json("Comment cannot be empty");
+		// Add Check if user is on the user list
 		const newComment = {
 			body: req.body.comment,
 			user: req.user,
@@ -43,7 +80,7 @@ router.patch("/:id/comment/add", [auth], async (req, res) => {
 		return res.status(200).json("Comment added!");
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json("Server error");
+		return res.status(500).json(err.message);
 	}
 });
 

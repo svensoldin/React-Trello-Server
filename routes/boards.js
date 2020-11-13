@@ -120,15 +120,21 @@ router.patch("/:id/title", [auth], async (req, res) => {
 
 router.patch("/:id/card", [auth], async (req, res) => {
 	try {
+		// Find board
 		const board = await Board.findById(req.params.id);
 		if (!board) return res.status(400).json("Board not found");
+
 		// Pull the right column from the board
 		let column = board.columns.find(
 			(column) => req.body.column == column.title
 		);
 		if (!column) return res.status(400).json("No such column");
+
+		// Create card
 		const { title, labels, attachments, comments } = req.body.card;
 		let card = new Card({
+			board: board._id,
+			columnTitle: column.title,
 			title,
 			labels,
 			attachments,
