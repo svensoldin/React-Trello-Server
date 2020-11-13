@@ -1,15 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Board = require("../models/Board");
+const Card = require("../models/Card");
 const auth = require("../middleware/auth");
-const multer = require("multer");
-
-// Multer config
-const storage = multer.diskStorage({
-	destination: (req, file, cb) => cb(null, "uploads/"),
-	filename: (req, file, cb) => cb(null, Date.now() + "-" + file.name),
-});
-let upload = multer({ storage: storage }).single("file");
 
 // GET
 // Get all boards /boards
@@ -35,12 +28,7 @@ router.post("/", [auth], async (req, res) => {
 			photo,
 			users,
 			admins,
-		});
-		board.columns = columns.map((title) => {
-			return {
-				title,
-				cards: [],
-			};
+			columns,
 		});
 		await board.save();
 		return res.status(200).json("Board created");
@@ -134,24 +122,20 @@ router.patch("/:id/card", [auth], async (req, res) => {
 	try {
 		const board = await Board.findById(req.params.id);
 		if (!board) return res.status(400).json("Board not found");
-		// if (!board.admins.filter((admin) => req.user == admin).length) {
-		// 	return res
-		// 		.status(401)
-		// 		.json("Not authorized, only an admin can add a card");
-		// }
-
 		// Pull the right column from the board
 		let column = board.columns.find(
 			(column) => req.body.column == column.title
 		);
 		if (!column) return res.status(400).json("No such column");
 		const { title, labels, attachments, comments } = req.body.card;
-		column.cards.push({
+		let card = new Card({
 			title,
 			labels,
 			attachments,
 			comments,
 		});
+		column.cards.push(card);
+		await card.save();
 		await board.save();
 		return res.status(200).json("Card created");
 	} catch (err) {
@@ -195,84 +179,6 @@ router.patch("/:id/card/drag", [auth], async (req, res) => {
 		// Save board
 		await board.save();
 		return res.status(200).json("Card successfully moved");
-	} catch (err) {
-		console.error(err);
-		return res.status(500).json("Server error");
-	}
-});
-
-// POST
-// Upload attachment to card /boards/:id/card/upload
-
-router.post("/:id/card/upload", [auth], async (req, res) => {
-	try {
-		const board = await Board.findById(req.params.id);
-		const column = board.columns.find(
-			(column) => column.title == req.body.column
-		);
-		const card = column.cards.find((card) => card.title == req.body.card);
-		upload(req, res, (err) => {
-			if (err) return res.status(500).json(err);
-		});
-		card.attachments.push({ name: Date.now() + "-" + req.file.name });
-		await board.save();
-		return res.status(200).json(board);
-	} catch (err) {
-		console.error(err);
-		return res.status(500);
-	}
-});
-
-// PATCH
-// Add a new comment to a card /boards/:id/card/comment
-
-router.patch("/:id/card/comment", [auth], async (req, res) => {
-	try {
-		const board = await Board.findById(req.params.id);
-		if (!board) return res.status(400).json("Board not found");
-		const column = board.columns.find(
-			(column) => column.title == req.body.column
-		);
-		if (!column) return res.status(400).json("Column not found");
-		const card = column.cards.find((card) => card.title == req.body.card);
-		if (!card) return res.status(400).json("Card not found");
-		if (!req.body.comment)
-			return res.status(400).json("Comment cannot be empty");
-		const newComment = {
-			body: req.body.comment,
-			user: req.user,
-		};
-		card.comments.push(newComment);
-		await board.save();
-		return res.status(200).json(card.comments);
-	} catch (err) {
-		console.error(err);
-		return res.status(500).json("Server error");
-	}
-});
-
-// PATCH
-// Edit a comment /boards/:id/card/comment/edit
-
-router.patch("/:id/card/comment/edit", [auth], async (req, res) => {
-	try {
-		const board = await Board.findById(req.params.id);
-		if (!board) return res.status(400).json("Board not found");
-		const column = board.columns.find(
-			(column) => column.title == req.body.column
-		);
-		if (!column) return res.status(400).json("Column not found");
-		const card = column.cards.find((card) => card.title == req.body.card);
-		if (!card) return res.status(400).json("Card not found");
-		const comment = card.comments.find(
-			(comment) => comment._id == req.body.id
-		);
-		if (!comment) return res.status(400).json("Comment not found");
-		if (comment.user != req.user)
-			return res.status(403).json("You can't edit other users' comments");
-		comment.body = req.body.newComment;
-		await board.save();
-		return res.status(200).json(card.comments);
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json("Server error");
