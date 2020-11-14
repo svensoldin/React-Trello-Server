@@ -6,21 +6,40 @@ const auth = require("../middleware/auth");
 const multer = require("multer");
 
 // Multer config
+
 const storage = multer.diskStorage({
-	destination: (req, file, cb) => cb(null, "uploads/"),
-	filename: (req, file, cb) => cb(null, Date.now() + "-" + file.name),
+	destination: function (req, file, cb) {
+		cb(null, "uploads");
+	},
+	filename: function (req, file, cb) {
+		cb(null, file.originalname + "-" + Date.now());
+	},
 });
-let upload = multer({ storage: storage }).single("file");
+const upload = multer({ storage: storage });
 
 // GET
 // Get all cards from a board /cards/:boardId
 
-router.get("/:boardId", [auth], async (req, res) => {
+router.get("/board/:boardId", [auth], async (req, res) => {
 	try {
 		const board = await Board.findById(req.params.boardId);
 		if (!board) return res.status(400).json("Board not found");
 		const cards = await Card.find({ board: board._id });
 		return res.status(200).json(cards);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err.message);
+	}
+});
+
+// GET
+// Get a card by id /cards/:cardId
+
+router.get("/:cardId", [auth], async (req, res) => {
+	try {
+		const card = await Card.findById(req.params.cardId);
+		if (!card) return res.status(400).json("Card not found");
+		return res.status(200).json(card);
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json(err.message);
@@ -130,25 +149,31 @@ router.patch("/:cardId/comment/:commentId/delete", [auth], async (req, res) => {
 });
 
 // POST
-// Upload attachment to card /boards/:id/card/upload
+// Upload attachment to card /cards/:cardId/attachments/upload
 
-// router.post("/:id/card/upload", [auth], async (req, res) => {
-// 	try {
-// 		const board = await Board.findById(req.params.id);
-// 		const column = board.columns.find(
-// 			(column) => column.title == req.body.column
-// 		);
-// 		const card = column.cards.find((card) => card.title == req.body.card);
-// 		upload(req, res, (err) => {
-// 			if (err) return res.status(500).json(err);
-// 		});
-// 		card.attachments.push({ name: Date.now() + "-" + req.file.name });
-// 		await board.save();
-// 		return res.status(200).json(board);
-// 	} catch (err) {
-// 		console.error(err);
-// 		return res.status(500);
-// 	}
-// });
+router.post(
+	"/:cardId/attachments/upload",
+	[auth, upload.single("attachment")],
+	async (req, res) => {
+		try {
+			const card = await Card.findById(req.params.cardId);
+			if (!card) return res.status(400).json("Card not found");
+			const board = await Board.findById(card.board);
+			if (!board) return res.status(400).json("Board not found");
+			// Check if client is a user of the board
+			if (!board.users.find((user) => req.user == user))
+				return res
+					.status(403)
+					.json("Only users of the board can upload attachments");
+			if (!req.file) return res.status(400).json("Please upload a file");
+			card.attachments.push({ fileName: req.file.filename });
+			await card.save();
+			return res.status(200).json(card.attachments);
+		} catch (err) {
+			console.error(err);
+			return res.status(500);
+		}
+	}
+);
 
 module.exports = router;

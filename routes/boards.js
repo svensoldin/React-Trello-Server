@@ -81,6 +81,7 @@ router.patch("/:id/user", [auth], async (req, res) => {
 // Remove a user from the board /boards/:id/user/remove
 
 router.patch("/:id/user/remove", [auth], async (req, res) => {
+	const userToRemove = req.body.user;
 	try {
 		const board = await Board.findById(req.params.id);
 		if (!board) return res.status(400).json("No board found");
@@ -88,7 +89,8 @@ router.patch("/:id/user/remove", [auth], async (req, res) => {
 		if (!board.admins.filter((admin) => req.user == admin).length) {
 			return res.status(403).json("Only an admin can remove a user");
 		}
-		board.users = board.users.filter((user) => req.body.user != user);
+		const removeIndex = board.users.indexOf(userToRemove);
+		board.users.splice(removeIndex, 1);
 		await board.save();
 		return res.status(200).json("User removed");
 	} catch (err) {
@@ -180,7 +182,8 @@ router.patch("/:id/card/drag", [auth], async (req, res) => {
 		dropColumn.cards.push(draggedCard);
 
 		// Remove the card from the drag column
-		dragColumn.cards = dragColumn.cards.filter((card) => draggedCard != card);
+		const removeIndex = dragColumn.cards.indexOf(draggedCard);
+		dragColumn.cards.splice(removeIndex, 1);
 
 		// Save board
 		await board.save();
