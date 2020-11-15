@@ -4,6 +4,7 @@ const Board = require("../models/Board");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
 
 // GET
@@ -112,5 +113,22 @@ router.post(
 		}
 	}
 );
+
+// GET
+// Get a user's boards (user homepage) /users/:userId
+
+router.get("/:userId", [auth], async (req, res) => {
+	try {
+		// Check that the client is accessing his own homepage. If not, redirect him to his own homepage
+		if (req.user != req.params.userId)
+			return res.redirect(403, `/users/${req.user}`);
+		const boards = await Board.find({ users: `${req.params.userId}` });
+		if (!boards) return res.status(400).json("No boards found");
+		return res.status(200).json(boards);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err.message);
+	}
+});
 
 module.exports = router;
