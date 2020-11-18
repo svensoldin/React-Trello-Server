@@ -68,7 +68,9 @@ router.post(
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: 60 * 1000 * 10,
 			});
-			return res.status(200).json({ token, userId: user._id });
+			return res
+				.status(200)
+				.json({ token, user: { name: user.name, id: user._id } });
 		} catch (err) {
 			console.error(err);
 			res.status(500).send(err.message);
@@ -106,7 +108,9 @@ router.post(
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: 60 * 1000 * 10,
 			});
-			return res.status(200).json({ token, userId: user._id });
+			return res
+				.status(200)
+				.json({ token, user: { name: user.name, id: user._id } });
 		} catch (err) {
 			console.error(err.message);
 			return res.status(500).send("Server error");
