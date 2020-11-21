@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Board = require("../models/Board");
-const Card = require("../models/Card");
 const auth = require("../middleware/auth");
+const findCard = require("../middleware/findCard");
 
 // GET
 // Get all boards /boards
@@ -115,42 +115,88 @@ router.patch("/:id/title", [auth], async (req, res) => {
 	}
 });
 
+// PATCH
+// Add a column /boards/:boardId/column/add
+
+router.patch("/:boardId/column/add", [auth], async (req, res) => {
+	try {
+		const board = await Board.findById(req.params.boardId);
+		if (!board) return res.status(404).json("Board not found");
+		if (!board.users.find((user) => user == req.user))
+			return res
+				.status(403)
+				.json("You can't add a column to a board you are not a part of");
+		board.columns.push({ title: req.body.title, cards: [] });
+		await board.save();
+		return res.status(200).json(board.columns);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err);
+	}
+});
+
 // Cards
 
 // PATCH
-// Create a card /boards/:id/card
+// Create a card /boards/:boardId/:columnTitle/card/add
 
-router.patch("/:id/card", [auth], async (req, res) => {
+router.patch("/:boardId/:columnTitle/card/add", [auth], async (req, res) => {
 	try {
 		// Find board
-		const board = await Board.findById(req.params.id);
+		const board = await Board.findById(req.params.boardId);
 		if (!board) return res.status(400).json("Board not found");
 
 		// Pull the right column from the board
 		let column = board.columns.find(
-			(column) => req.body.column == column.title
+			(column) => req.params.columnTitle == column.title
 		);
-		if (!column) return res.status(400).json("No such column");
+		if (!column) return res.status(400).json("Column not found");
 
 		// Create card
-		const { title, labels, attachments, comments } = req.body.card;
-		let card = new Card({
-			board: board._id,
-			columnTitle: column.title,
+		const { title, labels, attachments, comments } = req.body;
+		let card = {
 			title,
 			labels,
 			attachments,
 			comments,
-		});
+		};
 		column.cards.push(card);
-		await card.save();
 		await board.save();
-		return res.status(200).json("Card created");
+		return res.status(200).json(column.cards);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json("Server error");
 	}
 });
+
+// PATCH
+// Delete a card /boards/:boardId/:columnTitle/:cardId/delete
+
+router.patch(
+	"/:boardId/:columnTitle/:cardId/delete",
+	[auth, findCard],
+	async (req, res) => {
+		try {
+			// findCard middleware pulls the board and card and adds them to the req object
+			const { board, column, card } = req;
+			// Check if client is on the board's users list
+			if (!board.users.find((user) => user == req.user))
+				return res
+					.status(403)
+					.json(
+						"You cannot delete a card from a board you are not a part of"
+					);
+			// Get the index of the card to be deleted and remove it from the board
+			const removeIndex = column.cards.indexOf(card);
+			column.cards.splice(removeIndex, 1);
+			await board.save();
+			return res.status(200).json(column.cards);
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(err.message);
+		}
+	}
+);
 
 // PATCH
 // Drag and drop card from column to another /boards/:id/card/drag
@@ -193,5 +239,55 @@ router.patch("/:id/card/drag", [auth], async (req, res) => {
 		return res.status(500).json("Server error");
 	}
 });
+
+// PATCH
+// Add a new comment to a card /boards/:boardId/:columnTitle/:cardId/comment/add
+
+router.patch(
+	"/:boardId/:columnTitle/:cardId/comment/add",
+	[auth, findCard],
+	async (req, res) => {
+		try {
+			if (!req.body.comment)
+				return res.status(400).json("Comment cannot be empty");
+			// Add Check if user is on the user list
+			const newComment = {
+				body: req.body.comment,
+				user: req.user,
+			};
+			req.card.comments.push(newComment);
+			await req.board.save();
+			return res.status(200).json(req.card.comments);
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(err.message);
+		}
+	}
+);
+
+// PATCH
+// Edit a comment /boards/:boardId/:columnTitle/:cardId/comment/:commentId/edit
+
+router.patch(
+	"/:boardId/:columnTitle/:cardId/comment/:commentId/edit",
+	[auth, findCard],
+	async (req, res) => {
+		try {
+			const { board, card } = req;
+			const comment = card.comments.find(
+				(comment) => comment._id == req.params.commentId
+			);
+			if (!comment) return res.status(400).json("Comment not found");
+			if (comment.user != req.user)
+				return res.status(403).json("You can't edit other users' comments");
+			comment.body = req.body.newComment;
+			await board.save();
+			return res.status(200).json(card.comments);
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json("Server error");
+		}
+	}
+);
 
 module.exports = router;

@@ -27,6 +27,5 @@ app.get("/test", (req, res) => {
 });
 app.use("/users", require("./routes/users"));
 app.use("/boards", require("./routes/boards"));
-app.use("/cards", require("./routes/cards"));
 
 module.exports = app;

@@ -21,8 +21,21 @@ const BoardSchema = new Schema({
 			title: String,
 			cards: [
 				{
-					type: Schema.Types.ObjectId,
-					ref: "cards",
+					title: { type: String, required: true },
+					comments: [
+						{
+							body: { type: String, required: true },
+							user: {
+								type: Schema.Types.ObjectId,
+								ref: "users",
+								required: true,
+							},
+						},
+					],
+					labels: [
+						{ body: { type: String, required: true }, color: String },
+					],
+					attachments: [{ fileName: { type: String, required: true } }],
 				},
 			],
 		},
