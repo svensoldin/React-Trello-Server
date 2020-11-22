@@ -3,6 +3,8 @@ const router = express.Router();
 const Board = require("../models/Board");
 const auth = require("../middleware/auth");
 const findCard = require("../middleware/findCard");
+const multer = require("multer");
+const fs = require("fs");
 
 // GET
 // Get all boards /boards
@@ -240,6 +242,8 @@ router.patch("/:id/card/drag", [auth], async (req, res) => {
 	}
 });
 
+// Comments
+
 // PATCH
 // Add a new comment to a card /boards/:boardId/:columnTitle/:cardId/comment/add
 
@@ -286,6 +290,139 @@ router.patch(
 		} catch (err) {
 			console.error(err);
 			return res.status(500).json("Server error");
+		}
+	}
+);
+
+// PATCH
+// Delete a comment /boards/:boardId/:columnTitle/:cardId/comment/:commentId/delete
+
+router.patch(
+	"/:boardId/:columnTitle/:cardId/comment/:commentId/delete",
+	[auth, findCard],
+	async (req, res) => {
+		try {
+			const { board, column, card } = req;
+			const commentToDelete = card.comments.find(
+				(comment) => comment._id == req.params.commentId
+			);
+			if (commentToDelete.user != req.user)
+				return res
+					.status(403)
+					.json("You cannot delete other users' comments");
+			const removeIndex = card.comments.indexOf(commentToDelete);
+			card.comments.splice(removeIndex, 1);
+			await board.save();
+			return res.status(200).json(card.comments);
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(err.message);
+		}
+	}
+);
+
+// Attachments
+
+// Multer config
+
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, "uploads");
+	},
+	filename: function (req, file, cb) {
+		cb(null, file.originalname + "-" + Date.now());
+	},
+});
+const upload = multer({ storage: storage });
+
+// POST
+// Upload attachment to card /boards/:boardId/:columnTitle/:cardId/attachment/upload
+
+router.post(
+	"/:boardId/:columnTitle/:cardId/attachment/upload",
+	[auth, upload.single("attachment"), findCard],
+	async (req, res) => {
+		try {
+			const { board, column, card } = req;
+			// Check if client is a user of the board
+			if (!board.users.find((user) => req.user == user))
+				return res
+					.status(403)
+					.json("Only users of the board can upload attachments");
+			if (!req.file) return res.status(400).json("Please upload a file");
+			card.attachments.push({ fileName: req.file.filename });
+			await board.save();
+			return res.status(200).json(card.attachments);
+		} catch (err) {
+			console.error(err);
+			return res.status(500);
+		}
+	}
+);
+
+// GET
+// Download an attachment /boards/:boardId/:columnTitle/:cardId/attachment/:attachmentId/download
+
+router.get(
+	"/:boardId/:columnTitle/:cardId/attachment/:attachmentId/download",
+	[auth, findCard],
+	async (req, res) => {
+		try {
+			const { board, card } = req;
+
+			// Check if client is a user of the board
+			if (!board.users.find((user) => req.user == user))
+				return res
+					.status(403)
+					.json("Only users of the board can download attachments");
+
+			const attachmentToDownload = card.attachments.find(
+				(attachment) => attachment._id == req.params.attachmentId
+			);
+			if (!attachmentToDownload)
+				return res.status(400).json("Attachment not found");
+			const file = `./uploads/${attachmentToDownload.fileName}`;
+			res.status(200).download(file);
+		} catch (err) {
+			console.error(err);
+			res.status(500).json(err.message);
+		}
+	}
+);
+
+// PATCH
+// Delete an attachment /boards/:boardId/:columnTitle/:cardId/attachment/:attachmentId/delete
+
+router.patch(
+	"/:boardId/:columnTitle/:cardId/attachment/:attachmentId/delete",
+	[auth, findCard],
+	async (req, res) => {
+		try {
+			const { board, card } = req;
+
+			// Check if client is a user of the board
+			if (!board.users.find((user) => req.user == user))
+				return res
+					.status(403)
+					.json("Only users of the board can remove attachments");
+
+			const attachmentToDelete = card.attachments.find(
+				(attachment) => attachment._id == req.params.attachmentId
+			);
+			if (!attachmentToDelete)
+				return res.status(400).json("Attachment not found");
+
+			// Delete the corresponding file from disk
+			fs.unlinkSync(`./uploads/${attachmentToDelete.fileName}`);
+
+			// Remove the attachment from card
+			const removeIndex = card.attachments.indexOf(attachmentToDelete);
+			card.attachments.splice(removeIndex, 1);
+			await board.save();
+			return res.status(200).json(card.attachments);
+		} catch (err) {
+			console.error(err);
+			res.status(500).json(err.message);
 		}
 	}
 );
