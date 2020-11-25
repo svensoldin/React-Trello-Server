@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
+const multer = require("multer");
 
 // GET
 // Get all users: /users
@@ -134,5 +135,38 @@ router.get("/:userId", [auth], async (req, res) => {
 		return res.status(500).json(err.message);
 	}
 });
+
+// POST
+// Add a profile picture /users/profile/add
+
+// Config multer
+
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, "images");
+	},
+	filename: function (req, file, cb) {
+		cb(null, file.originalname + "-" + Date.now());
+	},
+});
+const upload = multer({ storage: storage });
+
+router.post(
+	"/profile/add",
+	[auth, upload.single("attachment")],
+	async (req, res) => {
+		try {
+			if (!req.file) return res.status(400).json("Please upload a file");
+			const user = User.findById(req.user);
+			if (!user) return res.status(400).json("User not found");
+			user.picture = req.file.fileName;
+			await user.save();
+			return res.status(200).json(user.picture);
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(err);
+		}
+	}
+);
 
 module.exports = router;
