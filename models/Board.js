@@ -22,6 +22,7 @@ const BoardSchema = new Schema({
 			cards: [
 				{
 					title: { type: String, required: true },
+					users: { type: Schema.Types.ObjectId, ref: "users"},
 					comments: [
 						{
 							body: { type: String, required: true },
