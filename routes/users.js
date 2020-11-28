@@ -61,7 +61,6 @@ router.post(
 			// Encrypt password and save the user in the db
 			user.password = await bcrypt.hash(password, 10);
 			await user.save();
-
 			// Return token
 			const payload = {
 				id: user.id,
@@ -69,9 +68,10 @@ router.post(
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: 60 * 1000 * 10,
 			});
-			return res
-				.status(200)
-				.json({ token, user: { name: user.name, id: user._id } });
+			return res.status(200).json({
+				token,
+				user: { name: user.name, id: user._id, email: user.email },
+			});
 		} catch (err) {
 			console.error(err);
 			res.status(500).send(err.message);
@@ -109,15 +109,31 @@ router.post(
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: 60 * 1000 * 10,
 			});
-			return res
-				.status(200)
-				.json({ token, user: { name: user.name, id: user._id } });
+			return res.status(200).json({
+				token,
+				user: { name: user.name, id: user._id, email: user.email },
+			});
 		} catch (err) {
 			console.error(err.message);
 			return res.status(500).send("Server error");
 		}
 	}
 );
+
+// DELETE
+// Delete a user
+
+router.delete("/delete", [auth], async (req, res) => {
+	try {
+		const user = await User.findById(req.user);
+		if (!user) return res.status(400).json("User not found");
+		await user.deleteOne();
+		return res.status(200).json("Account deleted");
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err);
+	}
+});
 
 // GET
 // Get a user's boards (user homepage) /users/:userId
@@ -157,9 +173,9 @@ router.post(
 	async (req, res) => {
 		try {
 			if (!req.file) return res.status(400).json("Please upload a file");
-			const user = User.findById(req.user);
+			const user = await User.findById(req.user);
 			if (!user) return res.status(400).json("User not found");
-			user.picture = req.file.fileName;
+			user.picture = req.file.filename;
 			await user.save();
 			return res.status(200).json(user.picture);
 		} catch (err) {
