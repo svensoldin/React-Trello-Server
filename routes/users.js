@@ -7,6 +7,8 @@ const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
 const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 
 // GET
 // Get all users: /users
@@ -179,10 +181,29 @@ router.post(
 			await user.save();
 			return res.status(200).json(user.picture);
 		} catch (err) {
+			// Delete the uploaded image if there was an error
+			fs.unlinkSync(`./images/${req.file.fileName}`);
 			console.error(err);
 			return res.status(500).json(err);
 		}
 	}
 );
+
+// POST
+// Get user picture /users/profile
+
+router.post("/profile", [auth], async (req, res) => {
+	try {
+		const user = await User.findById(req.user);
+		if (!user) return res.status(400).json("user not found");
+		const picturePath = path.resolve(
+			__dirname + "/../images/" + user.picture
+		);
+		return res.sendFile(picturePath);
+	} catch (err) {
+		console.error(err);
+		return res.status(500);
+	}
+});
 
 module.exports = router;
