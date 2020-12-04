@@ -8,7 +8,8 @@ module.exports = async (req, res, next) => {
 		req.user = decoded.id;
 		next();
 	} catch (err) {
-		console.error(err);
-		res.status(500).json("Server error");
+		if (err.message === "jwt expired")
+			return res.status(401).json("You need to login again");
+		return res.status(500).json("Server error");
 	}
 };
