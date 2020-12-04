@@ -153,8 +153,8 @@ router.patch("/:boardId/column/add", [auth], async (req, res) => {
 			cards: [],
 			board: board._id,
 		});
-		board.columns.push(column);
 		await column.save();
+		board.columns.push(column._id);
 		await board.save();
 		return res.status(200).json(board.columns);
 	} catch (err) {
@@ -162,67 +162,6 @@ router.patch("/:boardId/column/add", [auth], async (req, res) => {
 		return res.status(500).json(err);
 	}
 });
-
-// PATCH
-// Create a card /boards/:boardId/:columnTitle/card/add
-
-router.patch("/:boardId/:columnTitle/card/add", [auth], async (req, res) => {
-	try {
-		// Find board
-		const board = await Board.findById(req.params.boardId);
-		if (!board) return res.status(400).json("Board not found");
-
-		// Pull the right column from the board
-		let column = board.columns.find(
-			(column) => req.params.columnTitle == column.title
-		);
-		if (!column) return res.status(400).json("Column not found");
-
-		// Create card
-		const { title, labels, attachments, comments } = req.body;
-		let card = {
-			title,
-			labels,
-			attachments,
-			comments,
-		};
-		column.cards.push(card);
-		await board.save();
-		return res.status(200).json(column.cards);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json("Server error");
-	}
-});
-
-// PATCH
-// Delete a card /boards/:boardId/:columnTitle/:cardId/delete
-
-router.patch(
-	"/:boardId/:columnTitle/:cardId/delete",
-	[auth, findCard],
-	async (req, res) => {
-		try {
-			// findCard middleware pulls the board and card and adds them to the req object
-			const { board, column, card } = req;
-			// Check if client is on the board's users list
-			if (!board.users.find((user) => user == req.user))
-				return res
-					.status(403)
-					.json(
-						"You cannot delete a card from a board you are not a part of"
-					);
-			// Get the index of the card to be deleted and remove it from the board
-			const removeIndex = column.cards.indexOf(card);
-			column.cards.splice(removeIndex, 1);
-			await board.save();
-			return res.status(200).json(column.cards);
-		} catch (err) {
-			console.error(err);
-			return res.status(500).json(err.message);
-		}
-	}
-);
 
 // PATCH
 // Drag and drop card from column to another /boards/:id/card/drag

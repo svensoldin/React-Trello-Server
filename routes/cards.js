@@ -25,6 +25,20 @@ router.get("/", [auth], async (req, res) => {
 	}
 });
 
+// GET
+// Get all cards from a column /cards/:columnId
+
+router.get("/:columnId", [auth], async (req, res) => {
+	try {
+		const cards = await Card.find({ column: req.params.columnId });
+		if (!cards) return res.status(404).json("No cards found");
+		return res.status(200).json(cards);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
+
 // PATCH
 // Add a new comment to a card /cards/:id/comment/add
 

@@ -33,13 +33,35 @@ router.patch(":columnId/card/add", [auth], async (req, res) => {
 			comments,
 			column: column._id,
 		});
-		column.cards.push(card);
 		await card.save();
-		await board.save();
+		column.cards.push(card._id);
+		await column.save();
 		return res.status(200).json(column.cards);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json("Server error");
+	}
+});
+
+// PATCH
+// Delete a card /columns/:columnId/card/:cardId/delete
+
+router.patch("/:columnId/card/:cardId/delete", [auth], async (req, res) => {
+	try {
+		const column = await Column.findById(req.params.columnId);
+		if (!column) return res.status(400).json("column not found");
+		const card = await Card.findById(req.params.cardId);
+		if (!card) return res.status(400).json("card not found");
+		// Get the index of the card to be deleted and remove it from the column
+		const removeIndex = column.cards.indexOf(card._id);
+		column.cards.splice(removeIndex, 1);
+		await column.save();
+		// Delete the card document
+		await card.deleteOne();
+		return res.status(200).json(column.cards);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err.message);
 	}
 });
 

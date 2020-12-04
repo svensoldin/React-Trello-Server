@@ -145,6 +145,7 @@ router.get("/:userId", [auth], async (req, res) => {
 		// Check that the client is accessing his own homepage. If not, redirect him to his own homepage
 		if (req.user != req.params.userId)
 			return res.redirect(403, `/users/${req.user}`);
+		// No need to populate the columns here
 		const boards = await Board.find({ users: `${req.params.userId}` });
 		if (!boards) return res.status(400).json("No boards found");
 		return res.status(200).json(boards);
