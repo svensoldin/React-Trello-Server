@@ -70,10 +70,16 @@ router.post(
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: 60 * 1000 * 10,
 			});
-			return res.status(200).json({
-				token,
-				user: { name: user.name, id: user._id, email: user.email },
-			});
+			return res
+				.status(200)
+				.cookie("token", token, {
+					expires: new Date(Date.now() + 8 * 36000),
+					secure: false,
+					httpOnly: true,
+				})
+				.json({
+					user: { name: user.name, id: user._id, email: user.email },
+				});
 		} catch (err) {
 			console.error(err);
 			res.status(500).send(err.message);
@@ -111,16 +117,35 @@ router.post(
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: 60 * 1000 * 10,
 			});
-			return res.status(200).json({
-				token,
-				user: { name: user.name, id: user._id, email: user.email },
-			});
+			return res
+				.status(200)
+				.cookie("token", token, {
+					expires: new Date(Date.now() + 8 * 36000),
+					httpOnly: true,
+				})
+				.json({
+					user: { name: user.name, id: user._id, email: user.email },
+				});
 		} catch (err) {
 			console.error(err.message);
 			return res.status(500).send("Server error");
 		}
 	}
 );
+
+// POST
+// Logout a user (destroy cookie) /users/logout
+
+router.post("/logout", [auth], (req, res) => {
+	try {
+		return res
+			.status(200)
+			.clearCookie("token", { secure: false, httpOnly: true });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
 
 // DELETE
 // Delete a user

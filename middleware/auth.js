@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = async (req, res, next) => {
-	const token = req.header("x-auth-token");
+	console.log(req.cookies);
+	const token = req.cookies.token;
 	if (!token) return res.status(401).json("Not authenticated, no token");
 	try {
 		const decoded = await jwt.verify(token, process.env.JWT_SECRET);
