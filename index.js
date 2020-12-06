@@ -1,19 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const cookieParser = require("cookie-parser");
+const session = require("express-session");
+const MongoStore = require("connect-mongo")(session);
 require("dotenv").config();
 
 const app = express();
-
 app.use(
 	cors({
-		origin: ["http://localhost:3000"],
+		origin: "http://localhost:3000",
 		credentials: true,
 	})
 );
 app.use(express.json());
-app.use(cookieParser());
+app.use(
+	session({
+		cookie: {
+			maxAge: 1000 * 60 * 60,
+			httpOnly: true,
+			secure: false,
+			path: "/",
+		},
+		secret: process.env.SESSION_SECRET,
+		store: new MongoStore({ mongooseConnection: mongoose.connection }),
+		resave: false,
+		saveUninitialized: false,
+	})
+);
 
 //connect db
 mongoose.set("useCreateIndex", true);
