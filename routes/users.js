@@ -110,28 +110,14 @@ router.post(
 			if (!isMatch) {
 				return res.status(400).json({ errors: "Wrong credentials" });
 			}
-			req.session.loggedIn = true;
-			req.session.uid = user._id;
+			req.session.user = {
+				name: user.name,
+				email: user.email,
+				id: user._id,
+			};
 			return res.status(200).json({
 				user: { name: user.name, email: user.email, id: user._id },
 			});
-			// JWT Strategy
-			// const payload = {
-			// 	id: user.id,
-			// };
-			// const token = jwt.sign(payload, process.env.JWT_SECRET, {
-			// 	expiresIn: 60 * 1000 * 10,
-			// });
-			// res.json({
-			// 	user: { name: user.name, id: user._id, email: user.email },
-			// });
-			// res.status(200)
-			// 	.cookie("token", token, {
-			// 		expires: new Date(Date.now() + 8 * 36000),
-			// 		httpOnly: true,
-			// 		secure: true,
-			// 	})
-			// 	.send("cookie initialized");
 		} catch (err) {
 			console.error(err);
 			return res.status(500).send("Server error");
@@ -139,12 +125,35 @@ router.post(
 	}
 );
 
+// GET
+// Get session users/session
+
+router.get("/session", (req, res) => {
+	try {
+		const { user } = req.session;
+		return res.send(user);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json("Server error");
+	}
+});
+
 // POST
 // Logout a user (destroy cookie) /users/logout
 
-router.post("/logout", (req, res) => {
-	req.session.destroy();
-	res.status(200).json("Logout successful");
+router.post("/logout", ({ session }, res) => {
+	try {
+		session.destroy();
+		res.clearCookie("connect.sid", {
+			httpOnly: true,
+			secure: false,
+			path: "/",
+		});
+		res.status(200).json("Logout successful");
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err);
+	}
 });
 
 // DELETE
@@ -166,10 +175,10 @@ router.delete("/delete", [auth], async (req, res) => {
 // Get a user's boards (user homepage) /users/:userId
 
 router.get("/:userId", async (req, res) => {
-	const { uid, loggedIn } = req.session;
+	const { user } = req.session;
 	try {
 		// Check that the client is accessing his own homepage.
-		if (uid != req.params.userId) return res.status(403);
+		if (user.id != req.params.userId) return res.status(403);
 		// No need to populate the columns here
 		const boards = await Board.find({ users: `${req.params.userId}` });
 		if (!boards) return res.status(400).json("No boards found");
@@ -219,9 +228,10 @@ router.post(
 // Get user picture /users/profile
 
 router.post("/profile", async (req, res) => {
-	if (!req.session.loggedIn) return res.status(401).json("Not authenticated");
+	const { session } = req;
+	if (!session.user) return res.status(401).json("Not authenticated");
 	try {
-		const user = await User.findById(req.session.uid);
+		const user = await User.findById(session.user.id);
 		if (!user) return res.status(400).json("user not found");
 		const picturePath = path.resolve(
 			__dirname + "/../images/" + user.picture
