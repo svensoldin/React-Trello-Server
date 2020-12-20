@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(
 	session({
 		cookie: {
-			maxAge: 1000 * 60 * 60,
+			maxAge: 1000 * 60 * 60 * 4,
 			httpOnly: true,
 			secure: false,
 			path: "/",

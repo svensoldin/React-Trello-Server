@@ -18,7 +18,7 @@ router.get("/", [auth], async (req, res) => {
 // PATCH
 // Create a card /columns/:columnId/card/add
 
-router.patch(":columnId/card/add", [auth], async (req, res) => {
+router.patch("/:columnId/card/add", [auth], async (req, res) => {
 	try {
 		// Find column
 		const column = await Column.findById(req.params.columnId);

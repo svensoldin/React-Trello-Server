@@ -32,10 +32,10 @@ router.get("/:columnId", [auth], async (req, res) => {
 	try {
 		const cards = await Card.find({ column: req.params.columnId });
 		if (!cards) return res.status(404).json("No cards found");
-		return res.status(200).json(cards);
+		res.status(200).json(cards);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json("Server error");
+		res.status(500).json("Server error");
 	}
 });
 

@@ -32,7 +32,7 @@ router.get("/:boardId", [auth], async (req, res) => {
 			"columns"
 		);
 		if (!board) return res.status(400).json("Board not found");
-		return res.status(200).json(board);
+		res.status(200).json(board);
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json("Server error");
@@ -69,7 +69,7 @@ router.delete("/:id", [auth], async (req, res) => {
 		if (!board) return res.status(400).json("Board not found");
 
 		// Check if the user is an admin of the board
-		if (!board.admins.find((admin) => req.user === admin)) {
+		if (!board.admins.find((admin) => req.session.user === admin)) {
 			return res
 				.status(403)
 				.json("Not authorized, only an admin can delete a board");
@@ -108,7 +108,7 @@ router.patch("/:id/user/remove", [auth], async (req, res) => {
 		const board = await Board.findById(req.params.id);
 		if (!board) return res.status(400).json("No board found");
 		// Check if the client is an admin
-		if (!board.admins.find((admin) => req.user == admin)) {
+		if (!board.admins.find((admin) => req.session.user == admin)) {
 			return res.status(403).json("Only an admin can remove a user");
 		}
 		const removeIndex = board.users.indexOf(userToRemove);
@@ -144,7 +144,7 @@ router.patch("/:boardId/column/add", [auth], async (req, res) => {
 	try {
 		const board = await Board.findById(req.params.boardId);
 		if (!board) return res.status(404).json("Board not found");
-		if (!board.users.find((user) => user == req.user))
+		if (!board.users.find((id) => id == req.session.user.id))
 			return res
 				.status(403)
 				.json("You can't add a column to a board you are not a part of");
@@ -220,7 +220,7 @@ router.patch(
 			// Add Check if user is on the user list
 			const newComment = {
 				body: req.body.comment,
-				user: req.user,
+				user: req.session.user,
 			};
 			req.card.comments.push(newComment);
 			await req.board.save();
