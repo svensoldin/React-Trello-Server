@@ -35,7 +35,7 @@ router.get("/:columnId", [auth], async (req, res) => {
 		res.status(200).json(cards);
 	} catch (err) {
 		console.error(err);
-		res.status(500).json("Server error");
+		res.status(500).json(err);
 	}
 });
 

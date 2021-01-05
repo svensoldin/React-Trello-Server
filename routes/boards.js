@@ -163,48 +163,6 @@ router.patch("/:boardId/column/add", [auth], async (req, res) => {
 	}
 });
 
-// PATCH
-// Drag and drop card from column to another /boards/:id/card/drag
-
-router.patch("/:id/card/drag", [auth], async (req, res) => {
-	try {
-		const board = await Board.findById(req.params.id);
-		if (!board) return res.status(400).json("Board not found");
-
-		// Pull the drag column from the board
-		let dragColumn = board.columns.find(
-			(column) => req.body.dragColumn == column.title
-		);
-		if (!dragColumn) return res.status(400).json("Drag column not found");
-
-		// Pull the drop column from the board
-		let dropColumn = board.columns.find(
-			(column) => req.body.dropColumn == column.title
-		);
-		if (!dropColumn) return res.status(400).json("Drop column not found");
-
-		// Pull the card from the drag column
-		const draggedCard = dragColumn.cards.find(
-			(card) => req.body.cardId == card._id
-		);
-		if (!draggedCard) return res.status(400).json("Card not found");
-
-		// Add the card to the drop column
-		dropColumn.cards.push(draggedCard);
-
-		// Remove the card from the drag column
-		const removeIndex = dragColumn.cards.indexOf(draggedCard);
-		dragColumn.cards.splice(removeIndex, 1);
-
-		// Save board
-		await board.save();
-		return res.status(200).json("Card successfully moved");
-	} catch (err) {
-		console.error(err);
-		return res.status(500).json("Server error");
-	}
-});
-
 // Comments
 
 // PATCH
