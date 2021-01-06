@@ -1,5 +1,6 @@
-const app = require("./index");
+const server = require("./index");
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT);
-console.log("Server is running on" + PORT);
+server.listen(PORT, () => {
+	console.log("Server is running on" + PORT);
+});

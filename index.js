@@ -6,6 +6,7 @@ const MongoStore = require("connect-mongo")(session);
 require("dotenv").config();
 
 const app = express();
+
 app.use(
 	cors({
 		origin: "http://localhost:3000",
@@ -13,6 +14,8 @@ app.use(
 	})
 );
 app.use(express.json());
+
+// Express-session middleware setup
 app.use(
 	session({
 		cookie: {
@@ -50,4 +53,16 @@ app.use("/boards", require("./routes/boards"));
 app.use("/columns", require("./routes/columns"));
 app.use("/cards", require("./routes/cards"));
 
-module.exports = app;
+// Socket.io
+const server = require("http").createServer(app);
+const io = require("socket.io")(server, {
+	cors: {
+		origin: process.env.CLIENT_URL,
+	},
+});
+
+io.on("connection", (socket) => {
+	console.log("socket connection established");
+});
+
+module.exports = server;
