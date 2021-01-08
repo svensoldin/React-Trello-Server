@@ -39,6 +39,28 @@ router.get("/:columnId", [auth], async (req, res) => {
 	}
 });
 
+// DELETE
+// Delete a card /cards/:cardId/delete
+
+router.delete("/:cardId/delete", [auth], async (req, res) => {
+	try {
+		const card = await Card.findById(req.params.cardId);
+		if (!card) return res.status(400).json("card not found");
+		const column = await Column.findById(card.column);
+		if (!column) return res.status(400).json("column not found");
+		// Get the index of the card to be deleted and remove it from the column
+		const removeIndex = column.cards.indexOf(card._id);
+		column.cards.splice(removeIndex, 1);
+		await column.save();
+		// Delete the card document
+		await card.deleteOne();
+		return res.status(200).json(column.cards);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err.message);
+	}
+});
+
 // PATCH
 // Add a new comment to a card /cards/:id/comment/add
 

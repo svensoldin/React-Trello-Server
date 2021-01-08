@@ -53,16 +53,4 @@ app.use("/boards", require("./routes/boards"));
 app.use("/columns", require("./routes/columns"));
 app.use("/cards", require("./routes/cards"));
 
-// Socket.io
-const server = require("http").createServer(app);
-const io = require("socket.io")(server, {
-	cors: {
-		origin: process.env.CLIENT_URL,
-	},
-});
-
-io.on("connection", (socket) => {
-	console.log("socket connection established");
-});
-
-module.exports = server;
+module.exports = app;

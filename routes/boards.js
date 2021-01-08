@@ -24,13 +24,14 @@ router.get("/", [auth], async (req, res) => {
 });
 
 // GET
-// Get board by id with columns /boards/:boardId
+// Get board by id with columns and cards /boards/:boardId
 
 router.get("/:boardId", [auth], async (req, res) => {
 	try {
-		const board = await Board.findById(req.params.boardId).populate(
-			"columns"
-		);
+		const board = await Board.findById(req.params.boardId).populate({
+			path: "columns",
+			populate: { path: "cards" },
+		}); // Populate the columns and the cards within the columns
 		if (!board) return res.status(400).json("Board not found");
 		res.status(200).json(board);
 	} catch (err) {

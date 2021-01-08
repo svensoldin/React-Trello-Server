@@ -15,6 +15,45 @@ router.get("/", [auth], async (req, res) => {
 	}
 });
 
+// DELETE
+// Delete a column /columns/:columnId/delete
+
+router.delete(
+	"/:columnId/delete",
+	[auth],
+	async ({ params: { columnId } }, res) => {
+		try {
+			const column = await Column.findById(columnId);
+			if (!column) return res.status(400).json("Column not found");
+			await Card.deleteMany({ column: columnId });
+			await column.deleteOne();
+			return res.status(200).json("column and cards deleted");
+		} catch (err) {
+			return res.status(500).json(err);
+		}
+	}
+);
+
+// PATCH
+// Remove card from column /columns/:columnId/:cardId/delete
+
+router.patch(
+	"/:columnId/:cardId/delete",
+	[auth],
+	async ({ params: { columnId, cardId } }, res) => {
+		try {
+			const column = await Column.findById(columnId);
+			if (!column) return res.status(400).json("Column not found");
+			const removeIndex = column.cards.indexOf(cardId);
+			column.cards.splice(removeIndex, 1);
+			await column.save();
+			return res.status(200).json(column.cards);
+		} catch (err) {
+			return res.status(500).json(err);
+		}
+	}
+);
+
 // PATCH
 // Create a card /columns/:columnId/card/add
 
@@ -40,28 +79,6 @@ router.patch("/:columnId/card/add", [auth], async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		res.status(500).json("Server error");
-	}
-});
-
-// PATCH
-// Delete a card /columns/:columnId/card/:cardId/delete
-
-router.patch("/:columnId/card/:cardId/delete", [auth], async (req, res) => {
-	try {
-		const column = await Column.findById(req.params.columnId);
-		if (!column) return res.status(400).json("column not found");
-		const card = await Card.findById(req.params.cardId);
-		if (!card) return res.status(400).json("card not found");
-		// Get the index of the card to be deleted and remove it from the column
-		const removeIndex = column.cards.indexOf(card._id);
-		column.cards.splice(removeIndex, 1);
-		await column.save();
-		// Delete the card document
-		await card.deleteOne();
-		return res.status(200).json(column.cards);
-	} catch (err) {
-		console.error(err);
-		return res.status(500).json(err.message);
 	}
 });
 
