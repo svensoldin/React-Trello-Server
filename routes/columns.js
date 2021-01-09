@@ -83,46 +83,64 @@ router.patch("/:columnId/card/add", [auth], async (req, res) => {
 });
 
 // PATCH
-// Move card from one column to another /columns/drag/:source/:cardId
+// Drag and drop a card /columns/drag/:sourceId/:cardId
 
-router.patch("/drag/:source/:cardId", [auth], async ({ params, body }, res) => {
-	try {
-		const source = await Column.findById(params.source);
-		if (!source) return res.status(400).json("column not found");
+router.patch(
+	"/drag/:sourceId/:cardId",
+	[auth],
+	async (
+		{
+			params: { sourceId, cardId },
+			body: { droppableId: destinationId, index: destinationIndex },
+		},
+		res
+	) => {
+		try {
+			if (sourceId === destinationId) {
+				const column = await Column.findById(sourceId);
+				if (!column) return res.status(400).json("column not found");
+				const { cards } = column;
+				const draggedCard = await Card.findById(cardId);
+				if (!draggedCard) return res.status(400).json("card not found");
 
-		// The body contains an object with the id of the column and the insertion index
-		const destination = await Column.findById(body.droppableId);
-		if (!destination) return res.status(400).json("column not found");
-		const { index, droppableId } = destination;
+				const removeIndex = cards.indexOf(cardId);
+				cards.splice(removeIndex, 1);
+				cards.splice(destinationIndex, 0, draggedCard);
 
-		const draggedCard = await Card.findById(params.cardId);
-		if (!draggedCard) return res.status(400).json("card not found");
+				await draggedCard.save();
+				await column.save();
+				return res.status(200).json("success");
+			}
+			const source = await Column.findById(sourceId);
+			if (!source) return res.status(400).json("column not found");
 
-		// Insert the card in the destination column
-		destination.cards.splice(index, 0, draggedCard);
+			// The body of the req contains an object with the id of the column and the insertion index
+			const destination = await Column.findById(destinationId);
+			if (!destination) return res.status(400).json("column not found");
 
-		// Remove the card from the source column
-		const removeIndex = source.cards.indexOf(draggedCard);
-		source.cards.splice(removeIndex, 1);
+			const draggedCard = await Card.findById(cardId);
+			if (!draggedCard) return res.status(400).json("card not found");
 
-		// Change the card's "column" field
-		draggedCard.column = body.droppableId;
+			// Remove the card from the source
+			const removeIndex = source.cards.indexOf(cardId);
+			source.cards.splice(removeIndex, 1);
 
-		// Save
-		const documents = [destination, source, draggedCard];
-		const promises = documents.map((doc) => {
-			return new Promise(async (resolve, reject) => {
-				await doc.save((err) => {
-					if (err) reject(err);
-					resolve();
-				});
-			});
-		});
-		await Promise.all(promises);
-		return res.status(200).json("Success");
-	} catch (err) {
-		return res.status(500).json(err);
+			// Insert the card in its destination
+			destination.cards.splice(destinationIndex, 0, draggedCard);
+
+			// Change the card's "column" field
+			draggedCard.column = destinationId;
+
+			// Save
+			await draggedCard.save();
+			await source.save();
+			await destination.save();
+			return res.status(200).json("Success");
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(err);
+		}
 	}
-});
+);
 
 module.exports = router;

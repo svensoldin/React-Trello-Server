@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const ColumnSchema = new Schema({
 	board: { type: Schema.Types.ObjectId, required: true, ref: "board" },
 	title: String,
-	cards: [{ type: Schema.Types.ObjectId, ref: "card" }],
+	cards: [{ type: Schema.Types.ObjectId, ref: "card", unique: true }],
 });
 
 module.exports = Column = mongoose.model("column", ColumnSchema);
