@@ -15,6 +15,22 @@ router.get("/", [auth], async (req, res) => {
 	}
 });
 
+// PATCH
+// Change column's title /columns/:columnId/title
+
+router.patch("/:columnId/title", [auth], async (req, res) => {
+	try {
+		const column = await Column.findById(req.params.columnId);
+		if (!column) return res.status(400).json("column not found");
+		column.title = req.body.title;
+		await column.save();
+		return res.status(200).json(column);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err);
+	}
+});
+
 // DELETE
 // Delete a column /columns/:columnId/delete
 
@@ -25,6 +41,8 @@ router.delete(
 		try {
 			const column = await Column.findById(columnId);
 			if (!column) return res.status(400).json("Column not found");
+
+			// Delete all the cards within the column
 			await Card.deleteMany({ column: columnId });
 			await column.deleteOne();
 			return res.status(200).json("column and cards deleted");
