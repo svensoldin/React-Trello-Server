@@ -174,7 +174,7 @@ router.delete("/delete", [auth], async (req, res) => {
 // GET
 // Get a user's boards (user homepage) /users/:userId
 
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", [auth], async (req, res) => {
 	const { user } = req.session;
 	try {
 		// Check that the client is accessing his own homepage.
@@ -227,11 +227,11 @@ router.post(
 // POST
 // Get user picture /users/profile
 
-router.post("/profile", async (req, res) => {
+router.post("/profile/:userId", [auth], async (req, res) => {
 	const { session } = req;
 	if (!session.user) return res.status(401).json("Not authenticated");
 	try {
-		const user = await User.findById(session.user.id);
+		const user = await User.findById(req.params.userId);
 		if (!user) return res.status(400).json("user not found");
 		const picturePath = path.resolve(
 			__dirname + "/../images/" + user.picture

@@ -101,21 +101,17 @@ router.patch("/:id/user", [auth], async (req, res) => {
 });
 
 // PATCH
-// Remove a user from the board /boards/:id/user/remove
+// Remove a user from the board /boards/:boardId/remove/:userId
 
-router.patch("/:id/user/remove", [auth], async (req, res) => {
-	const userToRemove = req.body.user;
+router.patch("/:boardId/remove/:userId", [auth], async (req, res) => {
 	try {
-		const board = await Board.findById(req.params.id);
+		const board = await Board.findById(req.params.boardId);
 		if (!board) return res.status(400).json("No board found");
-		// Check if the client is an admin
-		if (!board.admins.find((admin) => req.session.user == admin)) {
-			return res.status(403).json("Only an admin can remove a user");
-		}
-		const removeIndex = board.users.indexOf(userToRemove);
+		// Todo: add check if the client is an admin
+		const removeIndex = board.users.indexOf(req.params.userId);
 		board.users.splice(removeIndex, 1);
 		await board.save();
-		return res.status(200).json("User removed");
+		return res.status(200).json(board.users);
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json("Server error");
