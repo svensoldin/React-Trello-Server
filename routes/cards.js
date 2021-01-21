@@ -128,4 +128,20 @@ router.patch("/:cardId/comment/:commentId/delete", [auth], async (req, res) => {
 	}
 });
 
+// PATCH
+// Update a field /cards/:cardId/:field/update
+
+router.patch("/:cardId/:field/update", [auth], async (req, res) => {
+	try {
+		const card = await Card.findById(req.params.cardId);
+		if (!card) return res.status(400).json("Card not found");
+		card[req.params.field] = req.body.text;
+		await card.save();
+		return res.status(200).json(card[req.params.field]);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json(err.message);
+	}
+});
+
 module.exports = router;
