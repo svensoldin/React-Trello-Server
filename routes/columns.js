@@ -134,7 +134,7 @@ router.patch(
 
       // Find the dragged card and change its columnId at the same time
       const draggedCard = await Card.findByIdAndUpdate(cardId, {
-        columnId: destinationId,
+        column: destinationId,
       });
       if (!draggedCard) return res.status(400).json('card not found');
 
