@@ -233,7 +233,10 @@ router.post('/profile/:userId', [auth], async (req, res) => {
 
 router.get('/', [auth], async (req, res) => {
   try {
-    const users = await User.find({ name: req.query.user });
+    const regex = new RegExp(req.query.user, 'i'); // Using a regex to find names that include the user query
+    const users = await User.find({ name: { $regex: regex } })
+      .select('-password')
+      .limit(3);
     if (!users) return res.status(404).json('No user found');
     return res.status(200).json(users);
   } catch (err) {
