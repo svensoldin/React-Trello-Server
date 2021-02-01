@@ -211,15 +211,16 @@ router.post(
   }
 );
 
-// POST
+// GET
 // Get user picture /users/profile
 
-router.post('/profile/:userId', [auth], async (req, res) => {
+router.get('/profile/:userId', [auth], async (req, res) => {
   const { session } = req;
   if (!session.user) return res.status(401).json('Not authenticated');
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(400).json('user not found');
+    if (!user.picture) return res.status(404).json(user.name);
     const picturePath = path.resolve(__dirname + '/../images/' + user.picture);
     return res.sendFile(picturePath);
   } catch (err) {
