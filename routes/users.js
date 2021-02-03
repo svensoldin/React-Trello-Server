@@ -167,7 +167,9 @@ router.get('/:userId', [auth], async (req, res) => {
     // Check that the client is accessing his own homepage.
     if (user.id != req.params.userId) return res.status(403);
     // No need to populate the columns here
-    const boards = await Board.find({ users: `${req.params.userId}` });
+    const boards = await Board.find({
+      users: `${req.params.userId}`,
+    }).populate({ path: 'users', model: User });
     if (!boards) return res.status(400).json('No boards found');
     return res.status(200).json(boards);
   } catch (err) {
@@ -220,12 +222,13 @@ router.get('/profile/:userId', [auth], async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(400).json('user not found');
-    if (!user.picture) return res.status(404).json(user.name);
+    if (!user.picture)
+      return res.status(200).json('user does not have a picture');
     const picturePath = path.resolve(__dirname + '/../images/' + user.picture);
     return res.sendFile(picturePath);
   } catch (err) {
     console.error(err);
-    return res.status(500);
+    return res.status(500).json(err);
   }
 });
 
