@@ -50,20 +50,13 @@ router.post(
       // Encrypt password and save the user in the db
       user.password = await bcrypt.hash(password, 10);
       await user.save();
-      // Return token
-      const payload = {
-        id: user.id,
+      req.session.user = {
+        name: user.name,
+        email: user.email,
+        id: user._id,
       };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: 60 * 1000 * 10,
-      });
-      res.cookie('token', token, {
-        expires: new Date(Date.now() + 8 * 36000),
-        secure: false,
-        httpOnly: true,
-      });
       return res.status(200).json({
-        user: { name: user.name, id: user._id, email: user.email },
+        user: { name: user.name, email: user.email, id: user._id },
       });
     } catch (err) {
       console.error(err);
