@@ -93,7 +93,7 @@ router.patch('/:columnId/card/add', [auth], async (req, res) => {
     await card.save();
     column.cards.push(card._id);
     await column.save();
-    return res.status(200).json(column.cards);
+    return res.status(200).json(card._id);
   } catch (err) {
     console.error(err);
     res.status(500).json('Server error');

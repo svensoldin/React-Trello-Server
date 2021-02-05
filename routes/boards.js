@@ -7,9 +7,6 @@ const Column = require('../models/Column');
 const User = require('../models/User');
 
 const auth = require('../middleware/auth');
-const findCard = require('../middleware/findCard');
-const multer = require('multer');
-const fs = require('fs');
 
 // GET
 // Get all boards /boards
@@ -48,16 +45,13 @@ router.get('/:boardId', [auth], async (req, res) => {
 
 router.post('/', [auth], async (req, res) => {
   try {
-    const { title, photo, users, admins, columns } = req.body;
+    const { title } = req.body;
     let board = new Board({
       title,
-      photo,
-      users,
-      admins,
-      columns,
+      users: [req.session.user.id],
     });
     await board.save();
-    return res.status(200).json('Board created');
+    return res.status(200).json(board._id);
   } catch (err) {
     console.error(err);
     return res.status(500).json('Server error');
@@ -72,12 +66,15 @@ router.delete('/:id', [auth], async (req, res) => {
     const board = await Board.findById(req.params.id);
     if (!board) return res.status(400).json('Board not found');
 
+    if (!board.users.find((user) => user == req.session.user.id))
+      return res.status(403).json('Not a part of the board');
+
     // Check if the user is an admin of the board
-    if (!board.admins.find((admin) => req.session.user === admin)) {
-      return res
-        .status(403)
-        .json('Not authorized, only an admin can delete a board');
-    }
+    // if (!board.admins.find((admin) => req.session.user === admin)) {
+    //   return res
+    //     .status(403)
+    //     .json('Not authorized, only an admin can delete a board');
+    // }
 
     await board.deleteOne();
     return res.status(200).json('Board deleted');
@@ -156,7 +153,7 @@ router.patch('/:boardId/column/add', [auth], async (req, res) => {
     await column.save();
     board.columns.push(column._id);
     await board.save();
-    return res.status(200).json(board.columns);
+    return res.status(200).json(column._id);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);
