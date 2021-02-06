@@ -76,6 +76,7 @@ router.delete('/:id', [auth], async (req, res) => {
     //     .json('Not authorized, only an admin can delete a board');
     // }
 
+    await Column.deleteMany({ board: board._id });
     await board.deleteOne();
     return res.status(200).json('Board deleted');
   } catch (err) {
@@ -147,8 +148,8 @@ router.patch('/:boardId/column/add', [auth], async (req, res) => {
         .json("You can't add a column to a board you are not a part of");
     let column = new Column({
       title: req.body.title,
-      cards: [],
       board: board._id,
+      cards: [],
     });
     await column.save();
     board.columns.push(column._id);
