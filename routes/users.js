@@ -84,11 +84,11 @@ router.post(
       const { email, password } = req.body;
       const user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ errors: 'Wrong credentials' });
+        return res.status(400).json('Wrong credentials');
       }
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ errors: 'Wrong credentials' });
+        return res.status(400).json('Wrong credentials');
       }
       req.session.user = {
         name: user.name,
@@ -100,7 +100,7 @@ router.post(
       });
     } catch (err) {
       console.error(err);
-      return res.status(500).send('Server error');
+      return res.status(500).json(err);
     }
   }
 );

@@ -8,7 +8,7 @@ const app = express();
 
 // API was not accessible on Safari hence this custom cors middleware
 app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://svensoldin.github.io');
+  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
 
   res.setHeader(
     'Access-Control-Allow-Methods',
