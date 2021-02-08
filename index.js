@@ -40,7 +40,7 @@ app.use(
     secret: process.env.SESSION_SECRET,
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
   })
 );
 

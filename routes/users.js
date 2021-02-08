@@ -84,6 +84,7 @@ router.post('/signin', async (req, res) => {
       email: user.email,
       id: user._id,
     };
+    console.log(req.session);
     return res.status(200).json({
       user: { name: user.name, email: user.email, id: user._id },
     });
