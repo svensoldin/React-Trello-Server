@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
@@ -7,12 +6,25 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-  })
-);
+// API was not accessible on Safari hence this custom cors middleware
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', 'https://svensoldin.github.io');
+
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+  );
+
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-Requested-With,content-type'
+  );
+
+  // For session
+  res.setHeader('Access-Control-Allow-Credentials', true);
+
+  next();
+});
 app.use(express.json());
 
 // Express-session middleware setup
