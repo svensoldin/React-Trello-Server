@@ -68,42 +68,30 @@ router.post(
 // POST
 // Sign in a user: /users/signin
 
-router.post(
-  '/signin',
-  // [
-  // 	check("email", "Please enter a valid email adress").isEmail(),
-  // 	check("password", "Password is required").exists(),
-  // ],
-  async (req, res) => {
-    // const errors = validationResult(req);
-    // if (!errors.isEmpty()) {
-    // 	return res.status(400).json({ errors: errors.array() });
-    // }
-
-    try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json('Wrong credentials');
-      }
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json('Wrong credentials');
-      }
-      req.session.user = {
-        name: user.name,
-        email: user.email,
-        id: user._id,
-      };
-      return res.status(200).json({
-        user: { name: user.name, email: user.email, id: user._id },
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json(err);
+router.post('/signin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json('Wrong credentials');
     }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json('Wrong credentials');
+    }
+    req.session.user = {
+      name: user.name,
+      email: user.email,
+      id: user._id,
+    };
+    return res.status(200).json({
+      user: { name: user.name, email: user.email, id: user._id },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
   }
-);
+});
 
 // GET
 // Get session users/session

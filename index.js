@@ -33,8 +33,9 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 4,
       httpOnly: true,
-      secure: false,
+      secure: true,
       path: '/',
+      sameSite: 'none',
     },
     secret: process.env.SESSION_SECRET,
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
