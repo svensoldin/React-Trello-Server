@@ -7,33 +7,6 @@ require('dotenv').config();
 
 const app = express();
 
-// API was not accessible on Safari hence this custom cors middleware
-// app.use(function (req, res, next) {
-//   res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
-
-//   res.setHeader(
-//     'Access-Control-Allow-Methods',
-//     'GET, POST, OPTIONS, PUT, PATCH, DELETE'
-//   );
-
-//   res.setHeader(
-//     'Access-Control-Allow-Headers',
-//     'X-Requested-With,content-type',
-//     'Set-Cookie'
-//   );
-
-//   // For session
-//   res.setHeader('Access-Control-Allow-Credentials', true);
-
-//   next();
-// });
-// app.use(
-//   cors({
-//     credentials: true,
-//     origin: process.env.CLIENT_URL,
-//   })
-// );
-
 // Serve the static files from React app
 app.use(express.static(path.join(__dirname, 'client/build')));
 app.use(express.json());
@@ -72,9 +45,9 @@ mongooseConnect();
 // Routes
 
 app.use('/api/users', require('./routes/users'));
-app.use('api/boards', require('./routes/boards'));
-app.use('api/columns', require('./routes/columns'));
-app.use('api/cards', require('./routes/cards'));
+app.use('/api/boards', require('./routes/boards'));
+app.use('/api/columns', require('./routes/columns'));
+app.use('/api/cards', require('./routes/cards'));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname + '/client/build/index.html'));
