@@ -84,7 +84,6 @@ router.post('/signin', async (req, res) => {
       email: user.email,
       id: user._id,
     };
-    console.log(req.session);
     return res.status(200).json({
       user: { name: user.name, email: user.email, id: user._id },
     });
@@ -117,6 +116,7 @@ router.post('/logout', ({ session }, res) => {
       httpOnly: true,
       secure: false,
       path: '/',
+      sameSite: 'none',
     });
     res.status(200).json('Logout successful');
   } catch (err) {
