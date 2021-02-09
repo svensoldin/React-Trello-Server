@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 require('dotenv').config();
@@ -7,24 +8,34 @@ require('dotenv').config();
 const app = express();
 
 // API was not accessible on Safari hence this custom cors middleware
-app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
+// app.use(function (req, res, next) {
+//   res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
 
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, OPTIONS, PUT, PATCH, DELETE'
-  );
+//   res.setHeader(
+//     'Access-Control-Allow-Methods',
+//     'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+//   );
 
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-Requested-With,content-type'
-  );
+//   res.setHeader(
+//     'Access-Control-Allow-Headers',
+//     'X-Requested-With,content-type',
+//     'Set-Cookie'
+//   );
 
-  // For session
-  res.setHeader('Access-Control-Allow-Credentials', true);
+//   // For session
+//   res.setHeader('Access-Control-Allow-Credentials', true);
 
-  next();
-});
+//   next();
+// });
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: process.env.CLIENT_URL,
+//   })
+// );
+
+// Serve the static files from React app
+app.use(express.static(path.join(__dirname, 'client/build')));
 app.use(express.json());
 
 // Express-session middleware setup
@@ -33,9 +44,9 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 4,
       httpOnly: true,
-      secure: true,
+      secure: 'auto',
       path: '/',
-      sameSite: 'none',
+      sameSite: 'lax',
     },
     secret: process.env.SESSION_SECRET,
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
@@ -59,12 +70,14 @@ const mongooseConnect = async () => {
 mongooseConnect();
 
 // Routes
-app.get('/test', (req, res) => {
-  res.status(200).json({ message: 'Pass!' });
+
+app.use('/api/users', require('./routes/users'));
+app.use('api/boards', require('./routes/boards'));
+app.use('api/columns', require('./routes/columns'));
+app.use('api/cards', require('./routes/cards'));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname + '/client/build/index.html'));
 });
-app.use('/users', require('./routes/users'));
-app.use('/boards', require('./routes/boards'));
-app.use('/columns', require('./routes/columns'));
-app.use('/cards', require('./routes/cards'));
 
 module.exports = app;

@@ -1,0 +1,8 @@
+{
+  "short_name": "React-Trello",
+  "name": "React-Trello",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
