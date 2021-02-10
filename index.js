@@ -69,7 +69,7 @@ const mongooseConnect = async () => {
 mongooseConnect();
 
 // In production, serve the static files from build folder
-// Serve the static files from React app
+
 app.use(express.static(path.join(__dirname, 'client/build')));
 
 // Routes
@@ -78,6 +78,8 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/boards', require('./routes/boards'));
 app.use('/api/columns', require('./routes/columns'));
 app.use('/api/cards', require('./routes/cards'));
+
+// For all other routes, rely on client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname + '/client/build/index.html'));
 });
