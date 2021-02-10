@@ -69,7 +69,7 @@ const mongooseConnect = async () => {
 mongooseConnect();
 
 // In production, serve the static files from build folder
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV !== 'development') {
   // Serve the static files from React app
   app.use(express.static(path.join(__dirname, 'client/build')));
   app.get('*', (req, res) => {
