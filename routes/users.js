@@ -112,12 +112,20 @@ router.get('/session', (req, res) => {
 router.post('/logout', ({ session }, res) => {
   try {
     session.destroy();
-    res.clearCookie('connect.sid', {
-      httpOnly: true,
-      secure: false,
-      path: '/',
-      sameSite: 'none',
-    });
+    if (process.env.NODE_ENV === 'development') {
+      res.clearCookie('connect.sid', {
+        httpOnly: true,
+        secure: false,
+        path: '/',
+        sameSite: 'none',
+      });
+    } else {
+      res.clearCookie('connect.sid', {
+        httpOnly: true,
+        secure: 'auto',
+        sameSite: 'strict',
+      });
+    }
     res.status(200).json('Logout successful');
   } catch (err) {
     console.error(err);
