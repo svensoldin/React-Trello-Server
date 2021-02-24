@@ -43,9 +43,9 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 4,
       httpOnly: true,
-      secure: 'auto',
+      secure: true,
       path: '/',
-      sameSite: 'lax',
+      sameSite: 'strict',
       domain: 'https://thullo.herokuapp.com/',
     },
     secret: process.env.SESSION_SECRET,
