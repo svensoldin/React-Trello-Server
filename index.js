@@ -46,6 +46,7 @@ app.use(
       secure: 'auto',
       path: '/',
       sameSite: 'lax',
+      domain: 'https://thullo.herokuapp.com/',
     },
     secret: process.env.SESSION_SECRET,
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
